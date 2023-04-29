@@ -4,7 +4,8 @@ from flask_login import LoginManager, login_user, current_user, logout_user, log
 import datetime
 from data.user import User
 from data.jobs import Jobs
-from forms import RegisterForm, LoginForm, JobForm
+from data.departments import Departments
+from forms import RegisterForm, LoginForm, JobForm, DepartmentForm
 
 db_session.global_init("db/expedition.db")
 
@@ -27,6 +28,12 @@ def main():
     query = db_sess.query(Jobs).all()
     return render_template('log.html', title='Works log', jobs=query)
 
+@app.route('/departments')
+def departments():
+    db_sess = db_session.create_session()
+    query = db_sess.query(Departments).all()
+    return render_template('dep_list.html', title='List of Departments', departments=query)
+
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
@@ -40,7 +47,7 @@ def register():
         return render_template('register.html', form=form, title='Registration - used email')
     registering_user = User(
         email=form.login.data,
-        surname=form.name.data,
+        surname=form.surname.data,
         name=form.name.data,
         age=form.age.data,
         position=form.position.data,
@@ -85,8 +92,9 @@ def addjob():
         job=form.job.data,
         work_size=form.work_size.data,
         collaborators=form.collaborators.data,
-        is_finished=form.is_finished.data,
+        is_finished=form.is_finished.data
     )
+    job.categories.append(form.hazard.data)
     db_sess.add(job)
     db_sess.commit()
     return redirect('/')
@@ -99,20 +107,16 @@ def editjob(job_id):
     checker = db_sess.query(Jobs).filter(Jobs.id == job_id).first()
     if not checker or current_user.id not in (1, checker.team_leader):
         return redirect('/')
-    # form.team_leader.data = checker.team_leader
-    # form.job.data = checker.job
-    # form.work_size.data = checker.work_size
-    # form.collaborators.data = checker.collaborators
-    # form.is_finished.data = checker.is_finished
     if form.validate_on_submit():
         checker.team_leader = form.team_leader.data
         checker.job = form.job.data
         checker.work_size = form.work_size.data
         checker.collaborations = form.collaborators.data
         checker.is_finished = form.is_finished.data
+        checker.hazard.remove(hazard)
         db_sess.commit()
         return redirect("/")
-    return render_template('job.html', form=form)
+    return render_template('job.html', form=form, title='Edit Job')
 
 
 @login_required
@@ -124,6 +128,51 @@ def deletejob(job_id):
         db_sess.delete(checker)
         db_sess.commit()
     return redirect("/")
+
+@login_required
+@app.route('/adddepartment', methods=['POST', 'GET'])
+def adddepartment():
+    form = DepartmentForm()
+    if not form.validate_on_submit():
+        return render_template('departments.html', form=form, title='Add department')
+    db_sess = db_session.create_session()
+    dep = Departments(
+        chief=form.chief.data,
+        title=form.title.data,
+        members=form.members.data,
+        email=form.email.data
+    )
+    db_sess.add(dep)
+    db_sess.commit()
+    return redirect('/departments')
+
+@login_required
+@app.route('/editdepartment/<int:dep_id>', methods=['POST', 'GET'])
+def editdepartment(dep_id):
+    form = DepartmentForm()
+    db_sess = db_session.create_session()
+    checker = db_sess.query(Departments).filter(Departments.id == dep_id).first()
+    if not checker or current_user.id not in (1, checker.chief):
+        return redirect('/departments')
+    if form.validate_on_submit():
+        checker.chief = form.chief.data,
+        checker.title = form.title.data,
+        checker.members = form.members.data,
+        checker.email = form.email.data
+        db_sess.commit()
+        return redirect("/departments")
+    return render_template('departments.html', form=form, title='Edit department')
+
+
+@login_required
+@app.route('/deletedepartment/<int:dep_id>')
+def deletedepartment(dep_id):
+    db_sess = db_session.create_session()
+    checker = db_sess.query(Departments).filter(Departments.id == dep_id).first()
+    if checker and current_user.id in (1, checker.chief):
+        db_sess.delete(checker)
+        db_sess.commit()
+    return redirect("/departments")
 
 if __name__ == '__main__':
     app.run(port=8000, host='127.0.0.1')
