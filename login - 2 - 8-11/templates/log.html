@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 align="center">Works log</h2>
+{% if current_user.is_authenticated %}
+<a role="button" href="/addjob" class="btn btn-secondary">Add job</a>
+{% endif %}
+{% for job in jobs %}
+<h3>Action # {{ job.id }}</h3>
+<table class="table">
+    <thead>
+    <tr class="table-secondary">
+        <th scope="col">Title of activity</th>
+        <th scope="col">Team leader</th>
+        <th scope="col">Duration</th>
+        <th scope="col">List of collaborators</th>
+        <th scope="col">is finished</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class="table-primary">{{ job.job }}</td>
+        <td class="table-primary">{{ job.users.name }}</td>
+        <td class="table-primary">{{ job.work_size }}</td>
+        <td class="table-primary" align="center">{{ job.collaborators }}</td>
+        <td align="center" {% if job.is_finished %} class="table-success">is finished</td>
+        {% else %} class="table-danger">is not finished</td> {% endif
+        %}
+    </tr>
+    </tbody>
+</table>
+{% if current_user.is_authenticated and current_user.id in (1, job.team_leader) %}
+<div>
+    <a role="button" href="/editjob/{{job.id}}" class="btn btn-warning">Edit job</a>
+    <a role="button" href="/deletejob/{{job.id}}" class="btn btn-danger">Delete job</a>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}
