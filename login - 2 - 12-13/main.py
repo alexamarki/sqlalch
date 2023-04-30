@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, current_user, logout_user, log
 import datetime
 from data.user import User
 from data.jobs import Jobs
+from data.hazard import Category, association_table
 from data.departments import Departments
 from forms import RegisterForm, LoginForm, JobForm, DepartmentForm
 
@@ -94,7 +95,8 @@ def addjob():
         collaborators=form.collaborators.data,
         is_finished=form.is_finished.data
     )
-    job.categories.append(form.hazard.data)
+    cat = Category(name=form.hazard.data)
+    job.categories.append(cat)
     db_sess.add(job)
     db_sess.commit()
     return redirect('/')
@@ -113,7 +115,9 @@ def editjob(job_id):
         checker.work_size = form.work_size.data
         checker.collaborations = form.collaborators.data
         checker.is_finished = form.is_finished.data
-        checker.hazard.remove(hazard)
+        checker.categories = []
+        cat = Category(name=form.hazard.data)
+        checker.categories.append(cat)
         db_sess.commit()
         return redirect("/")
     return render_template('job.html', form=form, title='Edit Job')

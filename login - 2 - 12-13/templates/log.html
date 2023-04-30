@@ -25,9 +25,9 @@
     <tr>
         <td class="table-primary">{{ job.job }}</td>
         <td class="table-primary">{{ job.users.name }}</td>
-        <td class="table-primary">{{ job.work_size }}</td>
+        <td class="table-primary">{{ job.work_size }} hours</td>
         <td class="table-primary" align="center">{{ job.collaborators }}</td>
-        <td class="table-primary" align="center">-</td>
+        <td class="table-primary" align="center">{{ job.categories[0].name }}</td>
         <td align="center" {% if job.is_finished %} class="table-success">is finished</td>
         {% else %} class="table-danger">is not finished</td> {% endif
         %}
